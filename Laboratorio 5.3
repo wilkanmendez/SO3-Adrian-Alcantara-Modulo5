@@ -17,7 +17,7 @@ echo "<h1>Servidor 2</h1>" | sudo tee /var/www/html/index.html
 # En Server1 (MASTER):
 vrrp_instance VI_1 {
     state MASTER
-    interface eth0
+    interface ens160
     virtual_router_id 51
     priority 100
     advert_int 1
