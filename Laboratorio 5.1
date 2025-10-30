@@ -1,0 +1,37 @@
+# En el Servidor Primario (Server1):
+# Crea la carpeta y 100 archivos:
+mkdir /home/syncdir
+cd /home/syncdir
+touch file{001..100}.txt
+
+# Prueba conexión SSH al servidor secundario:
+ssh usuario@IP_DEL_SERVER2
+
+# Ejecuta rsync manualmente (prueba):
+rsync -avz /home/syncdir/ usuario@IP_DEL_SERVER2:/home/syncdir/
+
+# Crear script automático:
+# Crea un archivo llamado /usr/local/bin/syncjob.sh:
+sudo nano /usr/local/bin/syncjob.sh
+# Dentro coloca:
+#!/bin/bash
+rsync -avz /home/syncdir/ usuario@IP_DEL_SERVER2:/home/syncdir/
+# Dale permisos:
+sudo chmod +x /usr/local/bin/syncjob.sh
+
+# Crear tarea en crontab:
+# Abre el cron:
+crontab -e
+# Agrega la línea:
+* * * * * /usr/local/bin/syncjob.sh
+# Esto ejecutará el script cada 1 minuto.
+
+# Validación:
+# Crea un nuevo archivo en el servidor 1:
+touch /home/syncdir/nuevo.txt
+# Espera 1 o 2 minutos.
+# En el Servidor 2, verifica:
+ls /home/syncdir/
+
+Debes ver nuevo.txt allí.
+Eso confirma que el cron + rsync funcionan correctamente.
