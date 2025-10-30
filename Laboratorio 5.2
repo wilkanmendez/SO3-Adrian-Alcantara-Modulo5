@@ -1,60 +1,63 @@
 # Práctica 2: Instalación y Configuración del Cluster
 
-En ambos servidores (RHEL y Kali):
-Configura el hostname:
+# En ambos servidores (RHEL y Kali):
+# Configura el hostname:
 sudo hostnamectl set-hostname server1   # En RHEL
 sudo hostnamectl set-hostname server2   # En Kali
 
-Edita /etc/hosts en ambos:
+# Edita /etc/hosts en ambos:
 sudo nano /etc/hosts
 
-Agrega:
+# Agrega:
 192.168.100.10   server1
 192.168.100.11   server2
-Asegúrate de que ambos se puedan hacer ping por nombre.
+# Asegúrate de que ambos se puedan hacer ping por nombre.
 
-Desactiva SELinux (solo para laboratorio):
+# Desactiva SELinux (solo para laboratorio):
 sudo setenforce 0
 
-Instalación de Pacemaker y Corosync
-En RHEL:
+# Instalación de Pacemaker y Corosync
+# En RHEL:
 sudo dnf install pacemaker corosync pcs -y
 sudo systemctl enable pcsd
 sudo systemctl start pcsd
 sudo passwd hacluster
+firewall-cmd --add-service=high-availability --permanent
+firewall-cmd --reload
 
-En Kali:
+# En Kali:
 sudo apt install pacemaker corosync pcs -y
 sudo systemctl enable pcsd
 sudo systemctl start pcsd
 sudo passwd hacluster
 
-Autenticación entre nodos
+# Autenticación entre nodos
 
-Desde server1 (RHEL):
+# Desde server1 (RHEL):
 sudo pcs cluster auth server1 server2 -u hacluster
-Cuando te pida la contraseña, usa la que configuraste antes.
+# Cuando te pida la contraseña, usa la que configuraste antes.
 
-Creación y arranque del cluster
-En server1:
+# Creación y arranque del cluster
+# En server1:
 sudo pcs cluster setup --name clusterHA server1 server2
 sudo pcs cluster start --all
 sudo pcs cluster enable --all
 
-Verifica el estado:
+# Verifica el estado:
 sudo pcs status
 
-Crear una IP flotante del cluster
-Vamos a crear una IP virtual compartida (por ejemplo 192.168.100.100):
-Esta IP se moverá automáticamente entre los servidores si uno falla.
+# Crear una IP flotante del cluster
+# Vamos a crear una IP virtual compartida (por ejemplo 192.168.100.100):
+sudo pcs resource create ClusterIP ocf:heartbeat:IPaddr2 ip=192.168.100.75 cidr_netmask=24 op monitor interval=30s
+# Esta IP se moverá automáticamente entre los servidores si uno falla.
 
-Haz ping a la IP flotante desde otra máquina o desde el mismo Kali
-ping 192.168.100.100
+# Haz ping a la IP flotante desde otra máquina o desde el mismo Kali
+ping 192.168.100.75
 
-Apaga uno de los servidores (por ejemplo RHEL):
+# Apaga uno de los servidores (por ejemplo RHEL):
 sudo systemctl stop pacemaker
 
-Verás que el ping sigue activo, porque Kali asume la IP.
-Enciende de nuevo el servidor y verifica:
+# Verás que el ping sigue activo, porque Kali asume la IP.
+# Enciende de nuevo el servidor y verifica:
 sudo systemctl start pacemaker
 sudo pcs status
