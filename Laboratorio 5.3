@@ -1,0 +1,60 @@
+# Práctica 3: Cluster de Alta Disponibilidad HTTP con KeepAlived
+
+# En ambos servidores:
+# Instalar Apache y Keepalived:
+sudo apt install apache2 keepalived -y
+# o en RHEL:
+sudo dnf install httpd keepalived -y
+
+# Crear página distinta en cada servidor:
+# En Server1:
+echo "<h1>Servidor 1</h1>" | sudo tee /var/www/html/index.html
+# En Server2
+echo "<h1>Servidor 2</h1>" | sudo tee /var/www/html/index.html
+
+# Configurar Keepalived
+# Edita /etc/keepalived/keepalived.conf
+# En Server1 (MASTER):
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+    virtual_ipaddress {
+        192.168.100.60/24
+    }
+}
+En Server2 (BACKUP):
+vrrp_instance VI_1 {
+    state BACKUP
+    interface eth0
+    virtual_router_id 51
+    priority 90
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+    virtual_ipaddress {
+        192.168.100.60/24
+    }
+}
+
+# Inicia el servicio en ambos:
+sudo systemctl enable --now keepalived
+
+# Prueba:
+# Desde tu PC Host, accede a:
+http://192.168.100.60
+# Verás la página del servidor activo (Server1).
+# Apaga Server1:
+sudo systemctl stop keepalived
+# Ahora, sin cambiar la IP, recarga el navegador:
+# Verás la página del Server2.
+
+# Eso demuestra la alta disponibilidad web (HA HTTP).
