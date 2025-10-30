@@ -1,0 +1,26 @@
+# Práctica 2: Instalación y Configuración del Cluster
+
+# Si usas Debian usa HeartBeat y si usas RedHat como yo vamos a usar Pacemaker y Corosync
+# Instala el repositorio
+sudo dnf install pacemaker corosync pcs -y
+sudo systemctl enable --now pcsd
+
+# Crear contraseña para el usuario hacluster:
+passwd hacluster
+
+# Autenticar nodos:
+pcs cluster auth server1 server2
+
+# Crear y arrancar el cluster:
+pcs cluster setup --name clusterHA server1 server2
+pcs cluster start --all
+pcs cluster enable --all
+
+# Agregar IP flotante:
+pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.100.50 cidr_netmask=24 op monitor interval=30s
+
+# Verificar:
+pcs status
+ping 192.168.100.50
+
+# Apaga un nodo y verifica que el ping siga respondiendo.
