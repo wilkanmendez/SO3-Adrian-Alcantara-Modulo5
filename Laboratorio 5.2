@@ -1,26 +1,60 @@
 # Práctica 2: Instalación y Configuración del Cluster
 
-# Si usas Debian usa HeartBeat y si usas RedHat como yo vamos a usar Pacemaker y Corosync
-# Instala el repositorio
+En ambos servidores (RHEL y Kali):
+Configura el hostname:
+sudo hostnamectl set-hostname server1   # En RHEL
+sudo hostnamectl set-hostname server2   # En Kali
+
+Edita /etc/hosts en ambos:
+sudo nano /etc/hosts
+
+Agrega:
+192.168.100.10   server1
+192.168.100.11   server2
+Asegúrate de que ambos se puedan hacer ping por nombre.
+
+Desactiva SELinux (solo para laboratorio):
+sudo setenforce 0
+
+Instalación de Pacemaker y Corosync
+En RHEL:
 sudo dnf install pacemaker corosync pcs -y
-sudo systemctl enable --now pcsd
+sudo systemctl enable pcsd
+sudo systemctl start pcsd
+sudo passwd hacluster
 
-# Crear contraseña para el usuario hacluster:
-passwd hacluster
+En Kali:
+sudo apt install pacemaker corosync pcs -y
+sudo systemctl enable pcsd
+sudo systemctl start pcsd
+sudo passwd hacluster
 
-# Autenticar nodos:
-pcs cluster auth server1 server2
+Autenticación entre nodos
 
-# Crear y arrancar el cluster:
-pcs cluster setup --name clusterHA server1 server2
-pcs cluster start --all
-pcs cluster enable --all
+Desde server1 (RHEL):
+sudo pcs cluster auth server1 server2 -u hacluster
+Cuando te pida la contraseña, usa la que configuraste antes.
 
-# Agregar IP flotante:
-pcs resource create VirtualIP ocf:heartbeat:IPaddr2 ip=192.168.100.50 cidr_netmask=24 op monitor interval=30s
+Creación y arranque del cluster
+En server1:
+sudo pcs cluster setup --name clusterHA server1 server2
+sudo pcs cluster start --all
+sudo pcs cluster enable --all
 
-# Verificar:
-pcs status
-ping 192.168.100.50
+Verifica el estado:
+sudo pcs status
 
-# Apaga un nodo y verifica que el ping siga respondiendo.
+Crear una IP flotante del cluster
+Vamos a crear una IP virtual compartida (por ejemplo 192.168.100.100):
+Esta IP se moverá automáticamente entre los servidores si uno falla.
+
+Haz ping a la IP flotante desde otra máquina o desde el mismo Kali
+ping 192.168.100.100
+
+Apaga uno de los servidores (por ejemplo RHEL):
+sudo systemctl stop pacemaker
+
+Verás que el ping sigue activo, porque Kali asume la IP.
+Enciende de nuevo el servidor y verifica:
+sudo systemctl start pacemaker
+sudo pcs status
