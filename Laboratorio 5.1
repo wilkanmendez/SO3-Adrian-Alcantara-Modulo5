@@ -4,8 +4,14 @@ mkdir /home/syncdir
 cd /home/syncdir
 touch file{001..100}.txt
 
-# Prueba conexión SSH al servidor secundario:
+# Prueba conexión SSH al servidor secundario y salimos
 ssh usuario@IP_DEL_SERVER2
+
+# Creamos un ssh-key para acceder sin contraseña
+ssh-keygen -t rsa -b 4096
+# Le das enter tres veces
+# Y lo copiamos en el otro servidor
+ssh-copy-id usuario@IP_DEL_SERVER2
 
 # Ejecuta rsync manualmente (prueba):
 rsync -avz /home/syncdir/ usuario@IP_DEL_SERVER2:/home/syncdir/
