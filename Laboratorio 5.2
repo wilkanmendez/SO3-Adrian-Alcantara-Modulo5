@@ -16,9 +16,14 @@ sudo nano /etc/hosts
 # Desactiva SELinux (solo para laboratorio):
 sudo setenforce 0
 
+# Habilitamos el repositorio HighAvailability
+sudo subscription-manager repos --enable=rhel-9-for-x86_64-highavailability-rpms
+sudo dnf clean all
+sudo dnf update
+
 # Instalación de Pacemaker y Corosync
 # En RHEL:
-sudo dnf install pacemaker corosync pcs -y
+sudo dnf install pacemaker corosync pcs -y 
 sudo systemctl enable pcsd
 sudo systemctl start pcsd
 sudo passwd hacluster
